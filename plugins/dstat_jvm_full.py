@@ -10,7 +10,7 @@ class dstat_plugin(dstat):
     This plugin gathers jvm stats via jcmd.
 
     Usage:
-       dstat --jvm-full [ -I PID ]
+       JVM_PID=15123 dstat --jvm-full 
 
     Minimize the impacts of jcmd and consider using:
 
@@ -41,9 +41,10 @@ class dstat_plugin(dstat):
             raise Exception('Needs jstat binary')
 
         try:
-            int(op.intlist[0])
+            self.jvm_pid = int(os.environ.get('JVM_PID',0))
         except Exception as e:
-            op.intlist = [0]
+            self.jvm_pid = 0
+
         return True
 
     @staticmethod
@@ -63,7 +64,7 @@ class dstat_plugin(dstat):
     def extract(self):
         try:
             lines = self._cmd_splitlines(
-                '%s %s PerfCounter.print ' % (BIN_JCMD, op.intlist[0]))
+                '%s %s PerfCounter.print ' % (BIN_JCMD, self.jvm_pid))
             table = dict(self._to_stat(*l) for l in lines
                          if len(l) > 1)
             if table:

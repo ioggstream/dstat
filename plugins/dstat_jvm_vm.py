@@ -1,6 +1,6 @@
 # Author: Roberto Polli <rpolli@redhat.com>
 #
-# This plugin shows jvm stats using the -I argument.
+# This plugin shows jvm stats using the JVM_PID environment variable.
 # Requires the presence of the /tmp/hsperfdata_* directory and
 #  files created when running java with the profiler enabled.
 #
@@ -19,9 +19,10 @@ class dstat_plugin(dstat):
         if not os.access('/usr/bin/jstat', os.X_OK):
             raise Exception('Needs jstat binary')
         try:
-            int(op.intlist[0])
+            self.jvm_pid = int(os.environ.get('JVM_PID', 0))
         except Exception:
-            op.intlist = [0]
+            self.jvm_pid = 0
+
         return True
 
     @staticmethod
@@ -37,7 +38,7 @@ class dstat_plugin(dstat):
         from collections import namedtuple
         try:
             lines = self._cmd_splitlines(
-                '/usr/bin/jstat -gc %s' % op.intlist[0])
+                '/usr/bin/jstat -gc %s' % self.jvm_pid)
             headers = next(lines)
             DStatParser = namedtuple('DStatParser', headers)
             line = next(lines)
